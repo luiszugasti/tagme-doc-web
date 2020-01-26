@@ -11,7 +11,7 @@ import io
 from multiprocessing import Pool
 
 '''
-Simple run of testing tagme API on test corpus. Let's see how a linear process runs.
+Simple run of testing tagme API on test corpus.
 '''
 
 
@@ -24,18 +24,16 @@ def main():
 
 def iterate_thru_docs():
 
-    path = os.getcwd() + "/clueweb09PoolFilesTest"
-    # path = "C://Users//Luis//PycharmProjects//tagme//clueweb09PoolFilesTest//"
+    path = os.getcwd() + "/testfolder"
     print(os.getcwd())
-    all_docs_annotated = {}
+    all_docs_annotated = []
 
     documents = os.listdir(path)
-    # full_document_paths = [path + '/' + document for document in documents]
 
-    # debugging - print all the full_document_paths (I think my
+    # Time the TAGME Process
+    start_time = time.time()
 
-    # Threading in Python
-    pool = ThreadPool(8)
+    pool = ThreadPool(40)
     all_docs_annotated = pool.map(process_document, documents)
 
     # Save results to file
@@ -45,14 +43,17 @@ def iterate_thru_docs():
         data = data.decode('utf-8')
         json_file.write(data)
 
+    print (time.time() - start_time)
+
+    # Once TAGME Process is completed, can now run the full document process when re-opening the JSON Object.
     return 1
 
 
 def process_document(document):
     start_time = time.time()
-    print document
+    print("Process for " + document + " has started.\n")
 
-    path = os.getcwd() + "/clueweb09PoolFilesTest"
+    path = os.getcwd() + "/testfolder"
     # open doc
     f = open(path + '/' + document, 'r')
 
@@ -67,7 +68,7 @@ def process_document(document):
 
     elapsed_time = time.time() - start_time
 
-    print("Process for " + (document) + " completed in " + str(elapsed_time) + " seconds\n")
+    print("Process for " + document + " completed in " + str(elapsed_time) + " seconds\n")
 
     return {document: annotation}
 
@@ -81,8 +82,7 @@ def get_tag_me(doc):
     doc_annotations = {}  # Dictionary!
 
     for ann in annotations.get_annotations(0.3):
-        # print "mention: " + unicode(ann.mention).encode('utf-8')\
-        #       + ". entity_Title: '" + unicode(ann.entity_title).encode('utf-8') + "'"
+
         try:
             occurrence_entity = doc_annotations[unicode(ann.entity_title).encode('utf-8')]
             doc_annotations[unicode(ann.entity_title).encode('utf-8')] = occurrence_entity + 1
