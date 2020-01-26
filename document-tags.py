@@ -6,6 +6,7 @@ import json
 import requests  # Don't know if this will work?
 from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool
+import io
 
 from multiprocessing import Pool
 
@@ -22,32 +23,38 @@ def main():
 
 
 def iterate_thru_docs():
-    start_time = time.time()
 
     path = os.getcwd() + "/clueweb09PoolFilesTest"
+    # path = "C://Users//Luis//PycharmProjects//tagme//clueweb09PoolFilesTest//"
     print(os.getcwd())
     all_docs_annotated = {}
 
     documents = os.listdir(path)
-    full_document_path = [path + '/' + document for document in documents]
+    # full_document_paths = [path + '/' + document for document in documents]
+
+    # debugging - print all the full_document_paths (I think my
 
     # Threading in Python
-    pool = ThreadPool(4)
+    pool = ThreadPool(8)
     all_docs_annotated = pool.map(process_document, documents)
 
     # Save results to file
-    output = json.dumps(dict)
-    f = open("dict.json", "w")
-    f.write(output)
-    f.close()
+    with io.open('dict.json', 'w', encoding='utf8') as json_file:
+        data = json.dumps(all_docs_annotated, ensure_ascii=False)
+        # auto-decodes data to unicode
+        data = data.decode('utf-8')
+        json_file.write(data)
+
     return 1
 
 
 def process_document(document):
+    start_time = time.time()
     print document
 
+    path = os.getcwd() + "/clueweb09PoolFilesTest"
     # open doc
-    f = open(document, 'r')
+    f = open(path + '/' + document, 'r')
 
     # Get the raw text from the document
     content = f.read()
@@ -56,11 +63,13 @@ def process_document(document):
 
     # get the list of this specific document
 
-    all_docs_annotated[document] = (get_tag_me(just_text))
+    annotation = (get_tag_me(just_text))
 
     elapsed_time = time.time() - start_time
 
-    return
+    print("Process for " + (document) + " completed in " + str(elapsed_time) + " seconds\n")
+
+    return {document: annotation}
 
 
 ''' Computes a tagme dictionary on a document per document basis'''
