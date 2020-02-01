@@ -34,11 +34,15 @@ def iterate_thru_docs():
     start_time = time.time()
 
     pool = ThreadPool(40)
-    all_docs_annotated = pool.map(process_document, documents)
+    dict_list = pool.map(process_document, documents)
+    # This returns a list of dictionaries, now merge them
+    all_docs_annotated = {}
+    for i in dict_list:
+        all_docs_annotated = merge_two_dicts(all_docs_annotated, i)
 
     # Save results to file
     with io.open('dict.json', 'w', encoding='utf8') as json_file:
-        data = json.dumps(all_docs_annotated, ensure_ascii=False)
+        data = json.dumps(all_docs_annotated, ensure_ascii=False, indent=4)
         # auto-decodes data to unicode
         data = data.decode('utf-8')
         json_file.write(data)
@@ -101,6 +105,12 @@ def get_annotations(doc, time_to_wait=1):
         annotations = get_annotations(doc, time_to_wait + 1)
     return annotations
 
+
+# https://stackoverflow.com/questions/38987/how-do-i-merge-two-dictionaries-in-a-single-expression
+def merge_two_dicts(x, y):
+    z = x.copy()
+    z.update(y)
+    return z
 
 if __name__ == "__main__":
     main()
