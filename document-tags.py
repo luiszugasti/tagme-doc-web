@@ -71,7 +71,7 @@ def process_document(document):
 
     elapsed_time = time.time() - start_time
 
-    print("Process for " + document + " completed in " + str(elapsed_time) + " seconds\n")
+    print("Thread for " + document + " completed in " + str(elapsed_time) + " seconds\n")
 
     return {document: annotation}
 
