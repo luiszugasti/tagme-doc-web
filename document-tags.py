@@ -3,7 +3,6 @@ import os
 from bs4 import BeautifulSoup
 import time
 import json
-import requests  # Don't know if this will work?
 from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool
 import io
