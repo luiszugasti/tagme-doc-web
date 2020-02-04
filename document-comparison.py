@@ -10,6 +10,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 import io
 import string
 import random
+import math
 
 '''
 Builds a comparison structure between documents that should be easily relatable.
@@ -41,7 +42,7 @@ def main(disallow_insignificant_weights):
     # Set the authorization token for subsequent calls globally
     tagme.GCUBE_TOKEN = "1c7074e0-10bb-4131-a498-5179035a001a-843339462"
 
-    with io.open("dict.json", encoding='utf-8') as file:
+    with io.open("shortrun.json", encoding='utf-8') as file:
         document_string = file.read().encode('utf-8')
 
     document_corpus = json.loads(document_string, encoding="utf-8")
@@ -69,15 +70,16 @@ def common_between_dicts(dictionary, disallow_insignificant_weights):
     tuple_document = []
     for doc_name in dictionary.iteritems():
         for doc_name2 in dictionary.iteritems():
-            if doc_name != doc_name2:
+            if doc_name != doc_name2: # This prevents loops of a document to itself, but we will still have swapped edges
                 tuple_document.append((doc_name, doc_name2))
 
     start_time = time.time()
-    pool = ThreadPool(40)
+    pool = ThreadPool(60)
     edge_list = pool.map(package_up_tuples_and_send_to_tagme, tuple_document)
     elapsed_time = time.time() - start_time
 
-    print("Job to get edges completed in " + str(elapsed_time) + " seconds\n")
+    print("Job to get edges completed in {0} seconds\n# of Operations: {1}".format(str(elapsed_time),
+                                                                                   str(len(edge_list))))
     common_tuple = ()
 
     # for iterable in dictionary.iteritems():
@@ -107,19 +109,13 @@ def package_up_tuples_and_send_to_tagme(two_docs):
     entity_weights = get_entity_relatedness(doc_entities_to_compare)
 
     # Weight calculation
-    weight = 0
+    weight = 0.0
     for rel in entity_weights.relatedness:
         weight += rel.rel
 
     weight = weight / len(entity_weights.relatedness)
 
-    # Now the fun part - create the edge between these two documents.
-    # hashed_single_doc = {}
-    # hashed_single_doc[two_docs[0][0]] = doc_entities_to_compare
-    # hashed_two_docs = {}
-    # hashed_two_docs[two_docs[1][0]] = hashed_single_doc
-
-    # Limitation - if there's
+    # Limitation - if there's 13 million docs, then this will be HUGE.
 
     returned_edge = Edge(two_docs[0][0], two_docs[1][0], weight)
 

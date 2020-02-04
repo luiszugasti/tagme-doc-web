@@ -40,7 +40,7 @@ def iterate_thru_docs():
         all_docs_annotated = merge_two_dicts(all_docs_annotated, i)
 
     # Save results to file
-    with io.open('dict.json', 'w', encoding='utf8') as json_file:
+    with io.open('shortrun.json', 'w', encoding='utf8') as json_file:
         data = json.dumps(all_docs_annotated, ensure_ascii=False, indent=4)
         # auto-decodes data to unicode
         data = data.decode('utf-8')
