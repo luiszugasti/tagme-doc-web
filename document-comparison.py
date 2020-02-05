@@ -24,18 +24,21 @@ class Graph:
 
     def add_node(self, node):
         # add a single key to the dictionary
-        if nodeID in self.nodes:
+        if node.nodeID in self.nodes:
             print("Apparently you're adding a duplicate node? Not allowed\n")
         else:
-            self.nodes[nodeID] = node # just a one, makes the data structure somewhat simpler?
+            self.nodes[node.nodeID] = node # just a one, makes the data structure somewhat simpler?
 
 # I feel I should be throwing these as exceptions... maybe if this was production ready code
 
 
 class Node:
-    def __init__(self, nodeID):
-        self.edges = {}
-        self.nodeID = nodeID
+    def __init__(self, node, edges=None):
+        if edges is None:
+            self.edges = {}
+        else:
+            self.edges = edges
+        self.nodeID = node.nodeID
 
     def add_edge(self, edge):
         """
