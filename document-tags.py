@@ -6,6 +6,8 @@ import json
 from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool
 import io
+import datetime
+import traceback
 
 from multiprocessing import Pool
 
@@ -82,7 +84,7 @@ def get_tag_me(doc):
     try:
         annotations = get_annotations(doc)
     except AttributeError:
-        print("This is a test know")
+        print("The TAGME service returned nothing. This is a server error; however, it should have been caught!")
         return
 
     doc_annotations = {}  # Dictionary!
@@ -101,10 +103,20 @@ def get_tag_me(doc):
 def get_annotations(doc, time_to_wait=1):
     try:
         annotations = tagme.annotate(doc, lang="en")
-    except:
+    except: # Catch-all... not PEP Compliant
         print("Connection error, trying again in: " + str(time_to_wait) + " seconds time.\n")
         time.sleep(time_to_wait)
+        traceback.print_exc()
         annotations = get_annotations(doc, time_to_wait + 1)
+
+    # TAGME Server error, returns None type
+    if annotations is None:
+        print("Connection error, TAGME API service returned None type to the annotations variable.\n"
+              "Will try again in " + str(time_to_wait) + " seconds time.\n"
+              "Time stamp: " + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        time.sleep(time_to_wait)
+        annotations = get_annotations(doc, time_to_wait + 1)
+
     return annotations
 
 
