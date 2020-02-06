@@ -22,7 +22,6 @@ def main():
 
 
 def iterate_thru_docs():
-
     path = os.getcwd() + "/testfolder"
     print(os.getcwd())
     all_docs_annotated = []
@@ -80,7 +79,11 @@ def process_document(document):
 
 
 def get_tag_me(doc):
-    annotations = get_annotations(doc)
+    try:
+        annotations = get_annotations(doc)
+    except AttributeError:
+        print("This is a test know")
+        return
 
     doc_annotations = {}  # Dictionary!
 
@@ -110,6 +113,7 @@ def merge_two_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
+
 
 if __name__ == "__main__":
     main()
