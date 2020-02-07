@@ -24,11 +24,15 @@ def main():
 
 
 def iterate_thru_docs():
-    path = os.getcwd() + "/testfolder"
+    path = os.getcwd() + "/clueweb09PoolFilesTest"
     print(os.getcwd())
     all_docs_annotated = []
 
     documents = os.listdir(path)
+
+    # Although we can expect compression rates from document to graph to be at around 10 times, for performance reasons,
+    # we cannot have all the documents opened in the list. Thus, we Loop through the documents list, in 1000 document
+    # chunks, writing to a new JSON file as necessary.
 
     # Time the TAGME Process
     start_time = time.time()
@@ -57,7 +61,7 @@ def process_document(document):
     start_time = time.time()
     print("Process for " + document + " has started.\n")
 
-    path = os.getcwd() + "/testfolder"
+    path = os.getcwd() + "/clueweb09PoolFilesTest"
     # open doc
     f = open(path + '/' + document, 'r')
 
