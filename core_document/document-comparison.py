@@ -143,5 +143,5 @@ def id_generator(size=7, chars=string.ascii_letters + string.digits):
 
 
 if __name__ == "__main__":
-    disallow_insignificant_weights = 1  # If 1, disallow insigificant weights
+    disallow_insignificant_weights = 1  # If 1, disallow insignificant weights
     main(disallow_insignificant_weights)
