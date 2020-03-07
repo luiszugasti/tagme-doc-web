@@ -24,11 +24,14 @@ def main():
 
 
 def iterate_thru_docs():
-    path = os.getcwd() + "/clueweb09PoolFilesTest"
-    print(os.getcwd())
-    all_docs_annotated = []
+    # assume we run this file from root://core_document
+    root_path = os.getcwd()
+    if root_path.endswith('core_document'):
+        root_path = root_path[:-14]
 
-    documents = os.listdir(path)
+    path = root_path + "\\test_corpuses\\test_folder\\"
+
+    documents = [path + listed_doc for listed_doc in os.listdir(path)]
 
     # Although we can expect compression rates from document to graph to be at around 10 times, for performance reasons,
     # we cannot have all the documents opened in the list. Thus, we Loop through the documents list, in 1000 document
@@ -41,17 +44,17 @@ def iterate_thru_docs():
     dict_list = pool.map(process_document, documents)
     # This returns a list of dictionaries, now merge them
     all_docs_annotated = {}
+    if bool(all_docs_annotated):
+        raise ValueError("The associated dictionary is empty")
     for i in dict_list:
         all_docs_annotated = merge_two_dicts(all_docs_annotated, i)
 
     # Save results to file
-    with io.open('shortrun.json', 'w', encoding='utf8') as json_file:
+    with io.open(root_path + "\\test_output\\srun.json", 'w', encoding='utf8') as json_file:
         data = json.dumps(all_docs_annotated, ensure_ascii=False, indent=4)
-        # auto-decodes data to unicode
-        data = data.decode('utf-8')
         json_file.write(data)
 
-    print (time.time() - start_time)
+    print(time.time() - start_time)
 
     # Once TAGME Process is completed, can now run the full document process when re-opening the JSON Object.
     return 1
@@ -59,11 +62,10 @@ def iterate_thru_docs():
 
 def process_document(document):
     start_time = time.time()
-    print("Process for " + document + " has started.\n")
+    print("Process for '" + document + "' has started.\n")
 
-    path = os.getcwd() + "/clueweb09PoolFilesTest"
     # open doc
-    f = open(path + '/' + document, 'r')
+    f = open(document, 'r')
 
     # Get the raw text from the document
     content = f.read()
@@ -96,10 +98,10 @@ def get_tag_me(doc):
     for ann in annotations.get_annotations(0.3):
 
         try:
-            occurrence_entity = doc_annotations[unicode(ann.entity_title).encode('utf-8')]
-            doc_annotations[unicode(ann.entity_title).encode('utf-8')] = occurrence_entity + 1
+            occurrence_entity = doc_annotations[ann.entity_title]
+            doc_annotations[ann.entity_title] = occurrence_entity + 1
         except KeyError:
-            doc_annotations[unicode(ann.entity_title).encode('utf-8')] = 1
+            doc_annotations[ann.entity_title] = 1
 
     return doc_annotations
 
@@ -107,7 +109,7 @@ def get_tag_me(doc):
 def get_annotations(doc, time_to_wait=1):
     try:
         annotations = tagme.annotate(doc, lang="en")
-    except: # Catch-all... not PEP Compliant
+    except:  # Catch-all... not PEP Compliant
         print("Connection error, trying again in: " + str(time_to_wait) + " seconds time.\n")
         time.sleep(time_to_wait)
         traceback.print_exc()
@@ -117,7 +119,8 @@ def get_annotations(doc, time_to_wait=1):
     if annotations is None:
         print("Connection error, TAGME API service returned None type to the annotations variable.\n"
               "Will try again in " + str(time_to_wait) + " seconds time.\n"
-              "Time stamp: " + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                                                         "Time stamp: " + datetime.datetime.now().strftime(
+            '%Y-%m-%d %H:%M:%S'))
         time.sleep(time_to_wait)
         annotations = get_annotations(doc, time_to_wait + 1)
 
