@@ -71,7 +71,14 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 # Test Corpuses
-test_corpuses/*
+# test_corpuses/*
 
 # Test Output
 test_output/*
+
+# virtual environments
+venv/*
+
+venvpy37/*
+
+# adding this line because I have no *clue* what the hell is happening with git
