@@ -79,6 +79,6 @@ test_output/*
 # virtual environments
 venv/*
 
-venvpy37/*
+venvpy37/
 
 # adding this line because I have no *clue* what the hell is happening with git
