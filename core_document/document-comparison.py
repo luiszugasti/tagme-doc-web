@@ -1,15 +1,13 @@
-import sys
-import tagme
-import os
-import time
-import json
-from multiprocessing import Pool
-from multiprocessing.dummy import Pool as ThreadPool
 import io
-import string
+import json
+import os
 import random
-import math
+import string
+import time
+from multiprocessing.dummy import Pool as ThreadPool
+
 import networkx as nx
+import tagme
 
 '''
 Builds a comparison structure between documents that should be easily relatable.

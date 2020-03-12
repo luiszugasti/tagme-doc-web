@@ -1,15 +1,13 @@
-import tagme
-import os
-from bs4 import BeautifulSoup
-import time
-import json
-from multiprocessing import Pool
-from multiprocessing.dummy import Pool as ThreadPool
-import io
 import datetime
+import io
+import json
+import os
+import time
 import traceback
+from multiprocessing.dummy import Pool as ThreadPool
 
-from multiprocessing import Pool
+import tagme
+from bs4 import BeautifulSoup
 
 '''
 Simple run of testing tagme API on test corpus.
@@ -29,7 +27,7 @@ def iterate_thru_docs():
     if root_path.endswith('core_document'):
         root_path = root_path[:-14]
 
-    path = root_path + "\\test_corpuses\\test_folder\\"
+    path = root_path + "//test_corpuses//test_folder//"
 
     documents = [path + listed_doc for listed_doc in os.listdir(path)]
 
@@ -50,7 +48,7 @@ def iterate_thru_docs():
         all_docs_annotated = merge_two_dicts(all_docs_annotated, i)
 
     # Save results to file
-    with io.open(root_path + "\\test_output\\srun.json", 'w', encoding='utf8') as json_file:
+    with io.open(root_path + "//test_output//srun.json", 'w', encoding='utf8') as json_file:
         data = json.dumps(all_docs_annotated, ensure_ascii=False, indent=4)
         json_file.write(data)
 
