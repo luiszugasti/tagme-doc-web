@@ -21,6 +21,7 @@ def main():
     iterate_thru_docs()
 
 
+# Batch job
 def iterate_thru_docs():
     # assume we run this file from root://core_document
     root_path = os.getcwd()
@@ -58,6 +59,32 @@ def iterate_thru_docs():
     return 1
 
 
+# Single job
+def iterate_specific_docs(list_of_docs):
+    # assume we get a list of iterable docs (just their qualified names)
+    root_path = os.getcwd()
+    if root_path.endswith('core_document'):
+        root_path = root_path[:-14]
+
+    path = root_path + "//test_corpuses//test_folder//"
+
+    documents = [path + listed_doc for listed_doc in list_of_docs]
+
+    # Time the TAGME Process
+    start_time = time.time()
+
+    pool = ThreadPool(40)
+    dict_list = pool.map(process_document, documents)
+    # This returns a list of dictionaries, now merge them
+    all_docs_annotated = {}
+    if bool(all_docs_annotated):
+        raise ValueError("The associated dictionary is empty")
+    for i in dict_list:
+        all_docs_annotated = merge_two_dicts(all_docs_annotated, i)
+
+    return all_docs_annotated
+
+
 def process_document(document):
     start_time = time.time()
     print("Process for '" + document + "' has started.\n")
@@ -93,6 +120,7 @@ def get_tag_me(doc):
 
     doc_annotations = {}  # Dictionary!
 
+    # hard coded check
     for ann in annotations.get_annotations(0.3):
 
         try:
@@ -130,6 +158,11 @@ def merge_two_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
+
+
+def single_document_process(document):
+    # Standard Tagme processing for the single document will return the expected annotation...
+    annotated_document = process_document(document)
 
 
 if __name__ == "__main__":
