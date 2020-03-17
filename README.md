@@ -24,7 +24,7 @@ Initializes the SQLite database with dummy data.
 Drops all the tables created, if they exist.
 
 ### Remote API
-####`<server>/get_doc_entity/<params: document_names>`
+#### `<server>/get_doc_entity/<params: document_names>`
 The bread and butter of the API. By calling with any amount of document names, the server will check if each
 of them exist within the cached database. For any documents not in the local database, a separate call to TAGME will
 be made. Once all documents' entities are available, the server will return the requested entities.  
@@ -51,13 +51,13 @@ The format that the api returns documents is a wrapped dictionary of
         ...
     }
 
-####`<server>/get_all_doc_entities`
+#### `<server>/get_all_doc_entities`
 Returns a list of all the cached document entities found in the corpus.
 
-####`<server>/get_all_docs`
+#### `<server>/get_all_docs`
 Returns a list of all cached document titles found in the corpus. 
 
-##Installation
+## Installation
 To get started with the API, first clone this github repo to an appropriate location on your computer.
 You will need to run the requirements.txt file with `pip install -r requirements`. Make sure you're in a virtual 
 environment!
