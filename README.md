@@ -15,7 +15,7 @@ More information about the API is below.
 The application is structured as a flask application. Hence, there are 
 flask command line commands available as well as remote endpoint commands.
 
-### Flask API
+### Flask CLI
 #### `db_create`
 Initializes the SQLite database with the default models. These models are `User`, `Entity` and `Document`.
 #### `db_seed`
@@ -61,4 +61,6 @@ Returns a list of all cached document titles found in the corpus.
 To get started with the API, first clone this github repo to an appropriate location on your computer.
 You will need to run the requirements.txt file with `pip install -r requirements`. Make sure you're in a virtual 
 environment!
-The project is tested with Python 3.7.
+To run the project, go to the base directory where the app.py script is located, and on a command line, type 
+`flask run`.
+The project is tested with `Python 3.7`.
