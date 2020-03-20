@@ -7,6 +7,7 @@ from flask_marshmallow import Marshmallow
 from sqlalchemy import func
 from sqlalchemy.orm import sessionmaker
 import core_document.document_tags as document_tags
+from collections import Counter
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -139,11 +140,33 @@ def hello_world():
 @app.route('/get_doc_entity/', methods=['GET'])
 def get_doc_entities():
     documents = (request.args.to_dict())
+    # if the top key is entered in the request, then the function behaves to return the "top" amount of entries.
+    # aka if top = 5 then it returns the top 5 hits, sorted by decreasing entity occurrences.
+    return_top_docs = int(documents.pop('top', None))
     documents = list(documents.keys())
 
+    final_entities = {}
     entities = document_tags.iterate_specific_docs(documents)
 
-    return jsonify(entities)
+    # sort through the entities *if* we have a return_top_docs entry.
+    if return_top_docs:
+        # iterate through each of the documents, sorting the entities and removing anything less than 'top'.
+        # https://stackoverflow.com/questions/613183/how-do-i-sort-a-dictionary-by-value
+        # iterate in place?
+        for document in entities:
+            temp = Counter(entities[document])
+            temp_entity_list = {}
+            # frankly I don't understand this statement.
+            # temp = {k: v for k, v in sorted(temp.items(), key=lambda item: item[1])}
+            # that's ok because collections does it for me.
+            # https://stackoverflow.com/questions/11902665/top-values-from-dictionary
+            for entity, occurrences in temp.most_common(return_top_docs):
+                temp_entity_list[entity] = occurrences
+            final_entities[document] = temp_entity_list
+    else:
+        final_entities = entities
+
+    return jsonify(final_entities)
 
     # return jsonify(entities)
     #
