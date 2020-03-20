@@ -156,8 +156,6 @@ def get_doc_entities():
         for document in entities:
             temp = Counter(entities[document])
             temp_entity_list = {}
-            # frankly I don't understand this statement.
-            # temp = {k: v for k, v in sorted(temp.items(), key=lambda item: item[1])}
             # that's ok because collections does it for me.
             # https://stackoverflow.com/questions/11902665/top-values-from-dictionary
             for entity, occurrences in temp.most_common(return_top_docs):

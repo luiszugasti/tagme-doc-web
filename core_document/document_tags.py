@@ -32,9 +32,9 @@ def iterate_thru_docs():
 
     documents = [path + listed_doc for listed_doc in os.listdir(path)]
 
-    # Although we can expect compression rates from document to graph to be at around 10 times, for performance reasons,
-    # we cannot have all the documents opened in the list. Thus, we Loop through the documents list, in 1000 document
-    # chunks, writing to a new JSON file as necessary.
+    # TODO: Although we can expect compression rates from document to graph to be at around 10 times,
+    #  for performance reasons, we cannot have all the documents opened in the list. Thus, we Loop through the
+    #  documents list, in 1000 document chunks, writing to a new JSON file as necessary.
 
     # Time the TAGME Process
     start_time = time.time()
@@ -68,13 +68,14 @@ def iterate_specific_docs(list_of_docs):
 
     path = root_path + "//test_corpuses//test_folder//"
 
-    documents = [path + listed_doc for listed_doc in list_of_docs]
-
     # Time the TAGME Process
     start_time = time.time()
 
     pool = ThreadPool(40)
-    dict_list = pool.map(process_document, documents)
+    # starmap - like map() except that the elements of the iterable are expected to be iterables that
+    # are unpacked as arguments.
+    arguments = [(path, listed_doc) for listed_doc in list_of_docs]
+    dict_list = pool.starmap(process_document, arguments)
     # This returns a list of dictionaries, now merge them
     all_docs_annotated = {}
     if bool(all_docs_annotated):
@@ -85,12 +86,12 @@ def iterate_specific_docs(list_of_docs):
     return all_docs_annotated
 
 
-def process_document(document):
+def process_document(base_path, document):
     start_time = time.time()
     print("Process for '" + document + "' has started.\n")
 
-    # open doc
-    f = open(document, 'r')
+    # open doc - use the
+    f = open(base_path + document, 'r')
 
     # Get the raw text from the document
     content = f.read()
@@ -158,11 +159,6 @@ def merge_two_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
-
-
-def single_document_process(document):
-    # Standard Tagme processing for the single document will return the expected annotation...
-    annotated_document = process_document(document)
 
 
 if __name__ == "__main__":

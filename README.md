@@ -24,11 +24,13 @@ Initializes the SQLite database with dummy data.
 Drops all the tables created, if they exist.
 
 ### Remote API
-#### `<server>/get_doc_entity/<params: document_names>`
+#### `<server>/get_doc_entity/<params: document_names> [top:n]`
 The bread and butter of the API. By calling with any amount of document names, the server will check if each
 of them exist within the cached database. For any documents not in the local database, a separate call to TAGME will
 be made. Once all documents' entities are available, the server will return the requested entities.  
-Hint: the TAGME server itself is somewhat slow, hence, it is advisable that for hundreds of documents, a high timeout
+If top is specified, this will change the behavior of the API to return only the top _n_ hits of entities per
+document.  
+__Hint__: the TAGME server itself is somewhat slow, hence, it is advisable that for hundreds of documents, a high timeout
 is configured. As more and more documents are cached into the database, this delay is expected to decrease.
 The format that the api returns documents is a wrapped dictionary of 
 `{documentname : entitie(s) : occurrence of entities}`, as below:
