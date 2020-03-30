@@ -90,7 +90,6 @@ def process_document(base_path, document):
     start_time = time.time()
     print("Process for '" + document + "' has started.\n")
 
-    # open doc - use the
     f = open(base_path + document, 'r')
 
     # Get the raw text from the document
@@ -147,7 +146,7 @@ def get_annotations(doc, time_to_wait=1):
         print("Connection error, TAGME API service returned None type to the annotations variable.\n"
               "Will try again in " + str(time_to_wait) + " seconds time.\n"
                                                          "Time stamp: " + datetime.datetime.now().strftime(
-            '%Y-%m-%d %H:%M:%S'))
+                                                            '%Y-%m-%d %H:%M:%S'))
         time.sleep(time_to_wait)
         annotations = get_annotations(doc, time_to_wait + 1)
 

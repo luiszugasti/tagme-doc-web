@@ -78,7 +78,7 @@ def package_up_tuples_and_send_to_tagme(two_docs):
 
     weight = weight / len(entity_weights.relatedness)
 
-    # Limitation - if there's 13 million docs, then this will be HUGE.
+    # Limitation - if there's 250,000 docs, then this will be HUGE.
 
     returned_edge = (str(two_docs[0][0]), str(two_docs[1][0]), {'weight': weight})
 

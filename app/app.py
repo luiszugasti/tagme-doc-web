@@ -208,7 +208,7 @@ def get_all_docs():
     return jsonify(result)
 
 
-# database models - remember to make this modular later...
+# # database models - remember to make this modular later...
 class User(db.Model):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
@@ -239,7 +239,7 @@ class DocumentEntityRelationship(db.Model):
     quantity = Column(Integer, nullable=False)
 
 
-# Marshmallow definitions
+# # Marshmallow definitions
 class UserSchema(ma.Schema):
     class Meta:
         fields = ('id', 'first_name', 'last_name', 'email', 'password')
