@@ -15,9 +15,6 @@ Builds a comparison structure between documents that should be easily relatable.
 
 
 def main():
-    # Set the authorization token for subsequent calls globally
-    tagme.GCUBE_TOKEN = "1c7074e0-10bb-4131-a498-5179035a001a-843339462"
-
     root_path = os.getcwd()
     if root_path.endswith('core_document'):
         root_path = root_path[:-14]
