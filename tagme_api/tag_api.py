@@ -14,6 +14,14 @@ from flask import (
 bp = Blueprint('tagme_api', __name__)
 
 
+# helper function for querying a database, from the good folks at flask.
+def query_db(query, args=(), one=False):
+    cur = g.db.execute(query, args)
+    rv = [dict((cur.description[idx][0], value)
+               for idx, value in enumerate(row)) for row in cur.fetchall()]
+    return (rv[0] if rv else None) if one else rv
+
+
 # get_doc_entity: return the document entities for a document.
 @bp.route('/get_doc_entity/', methods=['GET'])
 def get_doc_entities():
@@ -24,14 +32,14 @@ def get_doc_entities():
     documents = (request.args.to_dict())
     # if the top key is entered in the request, then the function behaves to return the "top" amount of entries.
     # aka if top = 5 then it returns the top 5 hits, sorted by decreasing entity occurrences.
-    return_top_docs = int(documents.pop('top', None))
+    return_top_docs = int(documents.pop('top', 0))
     documents = list(documents.keys())
 
     final_entities = {}
     entities = document_tags.iterate_specific_docs(documents)
 
     # sort through the entities *if* we have a return_top_docs entry.
-    if return_top_docs:
+    if return_top_docs > 0:
         # iterate through each of the documents, sorting the entities and removing anything less than 'top'.
         # https://stackoverflow.com/questions/613183/how-do-i-sort-a-dictionary-by-value
         # iterate in place?
@@ -49,18 +57,18 @@ def get_doc_entities():
     # test: insert into the database, the entries for the document we have.
     db = get_db()
 
-    for key in entities.keys():
+    for doc_name in entities.keys():
 
         if db.execute(
-            'SELECT * FROM document WHERE document_name = ?', (key,)
+            'SELECT * FROM document WHERE document_name = ?', (doc_name,)
         ).fetchone() is None:
             # not in the database yet. put it in.
             db.execute(
-                'INSERT INTO document (document_name) VALUES (?)', (key,)
+                'INSERT INTO document (document_name) VALUES (?)', (doc_name,)
             )
             db.commit()
 
-        for doc_entity in entities[key].keys():
+        for doc_entity in entities[doc_name].keys():
 
             if db.execute(
                 'SELECT * FROM entity WHERE entity_title = ?', (doc_entity,)
@@ -71,15 +79,22 @@ def get_doc_entities():
                 )
                 db.commit()
 
-            sample_doc_id = db.execute(
-                'SELECT document_id FROM document WHERE document_name = ?', (key,)
-            )
-            sample_entity_id = db.execute(
-                'SELECT entity_id FROM entity WHERE entity_title = ?', (doc_entity,)
-            )
-            db.execute(
-                'INSERT INTO doc_ent_rel (document_id, entity_id, quantity) VALUES (?, ?, ?)', (key, doc_entity, entities[key][doc_entity])
-            )
+            # Prepare to enter the document_id, entity_id tuples into the doc_ent_rel table.
+            sample_doc_id = query_db(
+                'SELECT document_id FROM document WHERE document_name = ?', (doc_name,), one=True
+            )['document_id']
+            sample_entity_id = query_db(
+                'SELECT entity_id FROM entity WHERE entity_title = ?', (doc_entity,), one=True
+            )['entity_id']
+
+            if db.execute(
+                'SELECT * FROM doc_ent_rel WHERE document_id = ? and '
+                    'entity_id = ?;', (sample_doc_id, sample_entity_id)
+            ).fetchone() is None:
+                db.execute(
+                    'INSERT INTO doc_ent_rel (document_id, entity_id, quantity) VALUES (?, ?, ?)',
+                    (sample_doc_id, sample_entity_id, entities[doc_name][doc_entity])
+                )
 
     return jsonify(final_entities)
 
