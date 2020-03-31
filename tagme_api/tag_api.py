@@ -5,6 +5,8 @@ import click
 from flask import current_app, g
 from flask.cli import with_appcontext
 
+from tagme_api.db import get_db
+
 from flask import (
     Blueprint, request, jsonify
 )
@@ -43,6 +45,41 @@ def get_doc_entities():
             final_entities[document] = temp_entity_list
     else:
         final_entities = entities
+
+    # test: insert into the database, the entries for the document we have.
+    db = get_db()
+
+    for key in entities.keys():
+
+        if db.execute(
+            'SELECT * FROM document WHERE document_name = ?', (key,)
+        ).fetchone() is None:
+            # not in the database yet. put it in.
+            db.execute(
+                'INSERT INTO document (document_name) VALUES (?)', (key,)
+            )
+            db.commit()
+
+        for doc_entity in entities[key].keys():
+
+            if db.execute(
+                'SELECT * FROM entity WHERE entity_title = ?', (doc_entity,)
+            ).fetchone() is None:
+                # not in the database yet as well. put it in.
+                db.execute(
+                    'INSERT INTO entity (entity_title) VALUES (?)', (doc_entity,)
+                )
+                db.commit()
+
+            sample_doc_id = db.execute(
+                'SELECT document_id FROM document WHERE document_name = ?', (key,)
+            )
+            sample_entity_id = db.execute(
+                'SELECT entity_id FROM entity WHERE entity_title = ?', (doc_entity,)
+            )
+            db.execute(
+                'INSERT INTO doc_ent_rel (document_id, entity_id, quantity) VALUES (?, ?, ?)', (key, doc_entity, entities[key][doc_entity])
+            )
 
     return jsonify(final_entities)
 
