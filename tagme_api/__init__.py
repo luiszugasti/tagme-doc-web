@@ -36,4 +36,10 @@ def create_app(test_config=None):
     app.register_blueprint(tag_api.bp)
     tag_api.init_app(app)
 
+    # FOR DEBUGGING PURPOSES
+    @app.route('/test_entity_batch')
+    def test_entity_batch():
+        print("TESTING: MAKE SURE TO REMOVE THIS ENDPOINT")
+        tag_api.batch_doc_entities_command()
+
     return app

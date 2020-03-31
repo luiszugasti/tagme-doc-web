@@ -4,6 +4,7 @@ import sqlite3
 import click
 from flask import current_app, g
 from flask.cli import with_appcontext
+import os
 
 from tagme_api.db import get_db
 
@@ -17,6 +18,14 @@ bp = Blueprint('tagme_api', __name__)
 # helper function for querying a database, from the good folks at flask.
 def query_db(query, args=(), one=False):
     cur = g.db.execute(query, args)
+    rv = [dict((cur.description[idx][0], value)
+               for idx, value in enumerate(row)) for row in cur.fetchall()]
+    return (rv[0] if rv else None) if one else rv
+
+
+# query the database - but this time use executemany
+def query_db_many(query, args=(), one=False):
+    cur = g.db.executemany(query, args)
     rv = [dict((cur.description[idx][0], value)
                for idx, value in enumerate(row)) for row in cur.fetchall()]
     return (rv[0] if rv else None) if one else rv
@@ -60,7 +69,7 @@ def get_doc_entities():
     for doc_name in entities.keys():
 
         if db.execute(
-            'SELECT * FROM document WHERE document_name = ?', (doc_name,)
+                'SELECT * FROM document WHERE document_name = ?', (doc_name,)
         ).fetchone() is None:
             # not in the database yet. put it in.
             db.execute(
@@ -71,7 +80,7 @@ def get_doc_entities():
         for doc_entity in entities[doc_name].keys():
 
             if db.execute(
-                'SELECT * FROM entity WHERE entity_title = ?', (doc_entity,)
+                    'SELECT * FROM entity WHERE entity_title = ?', (doc_entity,)
             ).fetchone() is None:
                 # not in the database yet as well. put it in.
                 db.execute(
@@ -88,7 +97,7 @@ def get_doc_entities():
             )['entity_id']
 
             if db.execute(
-                'SELECT * FROM doc_ent_rel WHERE document_id = ? and '
+                    'SELECT * FROM doc_ent_rel WHERE document_id = ? and '
                     'entity_id = ?;', (sample_doc_id, sample_entity_id)
             ).fetchone() is None:
                 db.execute(
@@ -123,25 +132,74 @@ def get_doc_entities():
     # pass
 
 
-@click.command('entity-batch')
-@click.argument("num_docs")
-@with_appcontext
-def batch_doc_entities_command(num_docs):
-    try:
-        num_docs = int(num_docs)
-        if num_docs < 1:
-            raise ValueError('Input is a number, but not valid')
-    except ValueError as error:
-        print('Please try again with a new value')
-        if error:
-            print('While handling the above exception, another exception occurred:\n'
-                  + repr(error))
+# @click.command('entity-batch')
+# @with_appcontext
+def batch_doc_entities_command():
+    def docs_iter_thru():
+        return 50
 
-    print("Seeding {0} new entries into the database.".format(num_docs))
-    """For the documents that are not in the database yet, add them to the database and save all their entities."""
+    # get all the documents in the doc corpus specified.
+    # assume we run this file from tagme_api folder
+    root_path = os.getcwd()
+    if root_path.endswith('tagme_api'):
+        root_path = root_path[:-10]
+
+    path = root_path + "//test_corpuses//test_folder//"
+
+    # get the documents within the whole directory.
+    documents = [listed_doc for listed_doc in os.listdir(path)]
+
+    db = get_db()
+
+    db_document_list = query_db(
+        'SELECT document_name FROM document'
+    )
+    db_document_names = []
+    for dictionary in db_document_list:
+        db_document_names.append(dictionary['document_name'])
+
+    # find the entries that are NOT in the database.
+    required_docs = list(set(documents).difference(db_document_names))
+
+    # get the documents that are currently in the SQL database.
+    print("Seeding {0} new entries into the database.".format(len(required_docs)))
+    # For the documents that are not in the database yet, add them to the database and save all their entities.
+    # Do this in 50 document chunks. Iterate thru the list and send this to the tagme service.
+
+    for i in range(0, len(required_docs), docs_iter_thru()):
+        required_docs_processed = required_docs[i:i + docs_iter_thru() - 1]
+        document_entity_structure = document_tags.iterate_specific_docs(required_docs)
+
+        # insert all the found documents within the database.
+        db.executemany('INSERT INTO document(document_name) VALUES (?)', (required_docs_processed,))
+
+        # commit.
+        db.commit()
+
+        # now, get the ids of the docs we just inputted (so we can build relations)
+        required_docs_ids = query_db_many('SELECT document_id FROM document WHERE document_name = ?;',
+                                          (required_docs_processed,))
+
+        input_entities = {}
+        # iterate thru the list of documents and build a list of entities to input within entity table.
+        for document_dictionary in document_entity_structure:
+            for entity in document_dictionary.keys():
+                # we build a dictionary of UNIQUE input_entities.
+                try:
+                    input_entities = document_dictionary[entity]
+                except KeyError:
+                    pass
+
+        # input all these entities within the entity table.
+        db.executemany('INSERT INTO entity(entity_title) VALUES (?)', (input_entities,))
+
+        # now, get the ids of the docs we just inputted (again, building relations....)
+        required_entity_ids = query_db_many('SELECT entity_id FROM entity WHERE entity_title = ?;',
+                                            (input_entities.keys(),))
 
     pass
 
 
 def init_app(app):
-    app.cli.add_command(batch_doc_entities_command)
+    # app.cli.add_command(batch_doc_entities_command)
+    pass
