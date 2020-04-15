@@ -42,4 +42,10 @@ def create_app(test_config=None):
         print("TESTING: MAKE SURE TO REMOVE THIS ENDPOINT")
         tag_api.batch_doc_entities_command()
 
+    # FOR DEBUGGING PURPOSES
+    @app.route('/test_graph_build')
+    def test_graph_build():
+        print("TESTING: MAKE SURE TO REMOVE THIS ENDPOINT")
+        tag_api.build_graph_from_db_command()
+
     return app

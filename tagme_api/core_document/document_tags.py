@@ -121,10 +121,10 @@ def get_tag_me(doc):
     for ann in annotations.get_annotations(0.3):
 
         try:
-            occurrence_entity = doc_annotations[ann.entity_title]
-            doc_annotations[ann.entity_title] = occurrence_entity + 1
+            occurrence_entity = doc_annotations[ann.entity_id] # Capture the entity IDs, save space in database
+            doc_annotations[ann.entity_id] = occurrence_entity + 1
         except KeyError:
-            doc_annotations[ann.entity_title] = 1
+            doc_annotations[ann.entity_id] = 1
 
     return doc_annotations
 

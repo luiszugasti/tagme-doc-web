@@ -1,16 +1,18 @@
-import tagme_api.core_document.document_tags as document_tags
-from collections import Counter
-import sqlite3
-import click
-from flask import current_app, g
-from flask.cli import with_appcontext
 import os
+from collections import Counter
 
-from tagme_api.db import get_db
-
+import click
 from flask import (
     Blueprint, request, jsonify
 )
+from flask import g
+from flask.cli import with_appcontext
+
+import tagme_api.core_document.document_tags as document_tags
+import tagme_api.core_document.document_comparison as document_comparison
+from tagme_api.db import get_db
+import time
+import networkx as nx
 
 bp = Blueprint('tagme_api', __name__)
 
@@ -107,35 +109,11 @@ def get_doc_entities():
 
     return jsonify(final_entities)
 
-    # check if the document exists within our database.
-    # document_entity_set = Document.query.filter_by(document_name=document_name).first()
-    # if document_entity_set:
-    #
-    #
-    #     return jsonify(message="This feature is under testing.")
-    #     # if the document exists, then we can surely serve the entities back.
-    #     session = Session()
-    #     # this is broken.... :$
-    #     result = session.query(DocumentEntityRelationship).filter_by(document_id=1).all()
-    #     return jsonify(result)
-    # else:
-    #     #document may exist in the corpus but not in the database...
-    #
-    #     return jsonify(message="Document {} was not found in the database.".format(document_name)), 404
-    # # if it exists, then we can serve the entities back.
-    #
-    # # if not, then call the related document processing function from document-tags.
-    #
-    # # with the returned params, we send them back to the client...
-    #
-    # # and commit them to the sql database.
-    # pass
 
-
-# @click.command('entity-batch')
-# @with_appcontext
+@click.command('entity-batch')
+@with_appcontext
 def batch_doc_entities_command():
-    def docs_iter_thru():
+    def docs_at_a_time_50():
         return 50
 
     # get all the documents in the doc corpus specified.
@@ -152,11 +130,13 @@ def batch_doc_entities_command():
     db = get_db()
 
     db_document_list = query_db(
-        'SELECT document_name FROM document'
+        'SELECT DISTINCT document_name FROM document_entity'
     )
     db_document_names = []
+    print("Getting docs...")
     for dictionary in db_document_list:
         db_document_names.append(dictionary['document_name'])
+        print("{0} is currently in the database.".format(dictionary))
 
     # find the entries that are NOT in the database.
     required_docs = list(set(documents).difference(db_document_names))
@@ -166,40 +146,65 @@ def batch_doc_entities_command():
     # For the documents that are not in the database yet, add them to the database and save all their entities.
     # Do this in 50 document chunks. Iterate thru the list and send this to the tagme service.
 
-    for i in range(0, len(required_docs), docs_iter_thru()):
-        required_docs_processed = required_docs[i:i + docs_iter_thru() - 1]
-        document_entity_structure = document_tags.iterate_specific_docs(required_docs)
+    for i in range(0, len(required_docs), docs_at_a_time_50()):
+        # build the list...
+        required_docs_processed = required_docs[i:i + docs_at_a_time_50() - 1]
+        for doc in required_docs_processed:
+            print(doc)
+        # send it to the document_tags service.
+        document_entity_structure = document_tags.iterate_specific_docs(required_docs_processed)
 
         # insert all the found documents within the database.
-        db.executemany('INSERT INTO document(document_name) VALUES (?)', (required_docs_processed,))
+        for doc_name in document_entity_structure:
+            for entity in document_entity_structure[doc_name]:
+                db.execute('INSERT INTO document_entity(document_name, entity_id, quantity) VALUES (?, ?, ?)',
+                           [doc_name
+, entity, document_entity_structure[doc_name][entity]])
 
         # commit.
         db.commit()
+        print("Status: {0}".format(i))
 
-        # now, get the ids of the docs we just inputted (so we can build relations)
-        required_docs_ids = query_db_many('SELECT document_id FROM document WHERE document_name = ?;',
-                                          (required_docs_processed,))
 
-        input_entities = {}
-        # iterate thru the list of documents and build a list of entities to input within entity table.
-        for document_dictionary in document_entity_structure:
-            for entity in document_dictionary.keys():
-                # we build a dictionary of UNIQUE input_entities.
-                try:
-                    input_entities = document_dictionary[entity]
-                except KeyError:
-                    pass
+# @click.command('build-graph-db')
+# @with_appcontext
+def build_graph_from_db_command():
 
-        # input all these entities within the entity table.
-        db.executemany('INSERT INTO entity(entity_title) VALUES (?)', (input_entities,))
+    db = get_db()
 
-        # now, get the ids of the docs we just inputted (again, building relations....)
-        required_entity_ids = query_db_many('SELECT entity_id FROM entity WHERE entity_title = ?;',
-                                            (input_entities.keys(),))
+    start_time = time.time()
 
-    pass
+    # Rebuild the document entity structure
+    db_document_list = query_db(
+        'SELECT DISTINCT document_name FROM document_entity'
+    )
+
+    document_entity_structure = {}
+
+    # if it's too slow: do it in parallel.
+    for doc_name in db_document_list:
+        dn = doc_name['document_name']
+        entities = query_db(
+        'SELECT entity_id, quantity FROM document_entity WHERE document_name = ?', (dn,)
+    )
+        document_entity_structure[dn] = {}
+        for entity in entities:
+            document_entity_structure[dn][entity['entity_id']] = entity['quantity']
+
+    # document_entity_structure has been rebuilt.
+    end_time = time.time()
+    print("Rebuilt all docs in {0}".format(end_time-start_time))
+
+    # now to build a graph...
+    doc_map = nx.Graph()
+    doc_map = document_comparison.common_between_dicts(document_entity_structure)
+
+
+    print("Graph has been built in {0}".format(end_time - start_time))
+
 
 
 def init_app(app):
-    # app.cli.add_command(batch_doc_entities_command)
+    app.cli.add_command(batch_doc_entities_command)
+    # app.cli.add_command(build_graph_from_db_command)
     pass

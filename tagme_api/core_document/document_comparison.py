@@ -58,6 +58,8 @@ def common_between_dicts(doc_dictionary):
 
 def package_up_tuples_and_send_to_tagme(two_docs):
     start_time = time.time()
+    print("Process for '" + str(two_docs[0][0]) + "' and '" + str(two_docs[1][0]) + "' has started.\n")
+
     # Overly descriptive name...
     # Loop all of doc1 and doc2's entities, and package them up into a list of entities.
     doc_entities_to_compare = []
@@ -67,7 +69,7 @@ def package_up_tuples_and_send_to_tagme(two_docs):
 
     # Send to TAGME API to get the weight of this connection!
     entity_weights = get_entity_relatedness(doc_entities_to_compare)
-
+    print("Entities '" + str(two_docs[0][0]) + "' and '" + str(two_docs[1][0]) + "' has started.\n")
     # Weight calculation
     weight = 0.0
     for rel in entity_weights.relatedness:
@@ -87,11 +89,12 @@ def package_up_tuples_and_send_to_tagme(two_docs):
 
 def get_entity_relatedness(list_of_tuples, time_to_wait=1):
     try:
-        entity_ratings = tagme.relatedness_title(list_of_tuples)
+        entity_ratings = tagme.relatedness_wid(list_of_tuples)
     except:  # Too broad an exception clause
         print("Connection error, trying again in: " + str(time_to_wait) + " seconds time.\n")
         time.sleep(time_to_wait)
         entity_ratings = get_entity_relatedness(list_of_tuples, time_to_wait * 2)
+    print("tagme called!")
     return entity_ratings
 
 
