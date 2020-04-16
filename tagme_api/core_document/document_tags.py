@@ -15,9 +15,6 @@ Simple run of testing tagme API on test corpus.
 
 
 def main():
-    # Set the authorization token for subsequent calls globally
-    tagme.GCUBE_TOKEN = "1c7074e0-10bb-4131-a498-5179035a001a-843339462"
-
     iterate_thru_docs()
 
 
@@ -90,7 +87,6 @@ def process_document(base_path, document):
     start_time = time.time()
     print("Process for '" + document + "' has started.\n")
 
-    # open doc - use the
     f = open(base_path + document, 'r')
 
     # Get the raw text from the document
@@ -125,10 +121,10 @@ def get_tag_me(doc):
     for ann in annotations.get_annotations(0.3):
 
         try:
-            occurrence_entity = doc_annotations[ann.entity_title]
-            doc_annotations[ann.entity_title] = occurrence_entity + 1
+            occurrence_entity = doc_annotations[ann.entity_id] # Capture the entity IDs, save space in database
+            doc_annotations[ann.entity_id] = occurrence_entity + 1
         except KeyError:
-            doc_annotations[ann.entity_title] = 1
+            doc_annotations[ann.entity_id] = 1
 
     return doc_annotations
 
@@ -147,7 +143,7 @@ def get_annotations(doc, time_to_wait=1):
         print("Connection error, TAGME API service returned None type to the annotations variable.\n"
               "Will try again in " + str(time_to_wait) + " seconds time.\n"
                                                          "Time stamp: " + datetime.datetime.now().strftime(
-            '%Y-%m-%d %H:%M:%S'))
+                                                            '%Y-%m-%d %H:%M:%S'))
         time.sleep(time_to_wait)
         annotations = get_annotations(doc, time_to_wait + 1)
 
